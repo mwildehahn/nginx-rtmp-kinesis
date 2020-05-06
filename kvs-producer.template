@@ -1,0 +1,27 @@
+#!/bin/bash
+
+LOG_FILE=/tmp/$1-$2.log
+
+on_die ()
+{
+    echo [WRAPPER_DEBUG] TERMINATED >> $LOG_FILE
+    # kill all children
+    pkill -KILL -P $$
+}
+
+trap 'on_die' TERM
+
+echo [WRAPPER_DEBUG] STARTED >> $LOG_FILE
+
+LD_LIBRARY_PATH=/opt/aws-kvs-sdk/open-source/local/lib:$LD_LIBRARY_PATH PATH=/opt/aws-kvs-sdk/open-source/local/bin:/opt/bin:$PATH GST_PLUGIN_PATH=/opt/aws-kvs-sdk/build:$GST_PLUGIN_PATH GST_DEBUG=4 DEBUG_DUMP_FRAME_INFO=1 KVS_DEBUG_DUMP_DATA_FILE_DIR=/opt/debug /usr/bin/gst-launch-1.0 -vm \
+    rtmpsrc name=rtmpsrc blocksize=1024 do-timestamp=true location="rtmp://localhost:1935/$1/$2" \
+    ! flvdemux name=demux demux.video \
+    ! h264parse \
+    ! video/x-h264, format=avc,alignment=au \
+    ! kvssink log-config=/opt/config/kvs-log-config stream-name=$2 storage-size=512 name=kvs \
+        aws-region="${AWS_REGION}" access-key="${AWS_ACCESS_KEY}" secret-key="${AWS_SECRET_KEY}" restart-on-error=0 \
+    demux.audio ! decodebin ! audioconvert ! audioresample ! avenc_aac ! kvs. &>> $LOG_FILE &
+
+wait
+
+echo [WRAPPER_DEBUG] FINISHED >> $LOG_FILE
