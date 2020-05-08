@@ -30,7 +30,7 @@ RUN apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
 WORKDIR /opt/
 
 # Build kvssink
-RUN git clone --recursive --single-branch --branch debug-v4 https://github.com/mwildehahn/amazon-kinesis-video-streams-producer-sdk-cpp.git aws-kvs-sdk
+RUN git clone --recursive --single-branch --branch debug-v5 https://github.com/mwildehahn/amazon-kinesis-video-streams-producer-sdk-cpp.git aws-kvs-sdk
 RUN mkdir -p aws-kvs-sdk/build; cd aws-kvs-sdk/build; cmake .. -DBUILD_GSTREAMER_PLUGIN=ON; make
 
 ENV LD_LIBRARY_PATH=/opt/aws-kvs-sdk/open-source/local/lib:$LD_LIBRARY_PATH
